@@ -16,6 +16,10 @@
 
 package storage
 
+import (
+	"github.com/DataDrake/eopkg-deps/index"
+)
+
 // Store is a common interface for all kinds of backing store
 type Store interface {
 	// Open initializes a connection to the backend store
@@ -28,6 +32,8 @@ type Store interface {
 	GetRight(right string) ([]string, error)
 	// Delete breaks the association
 	Delete(left, right string) error
+	// Rebuild clears the current store and rebuilds the contents from the provided index
+	Rebuild(i *index.Index) error
 	// Close deinitializes the connection to the backend store
 	Close() error
 }

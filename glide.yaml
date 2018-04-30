@@ -30,3 +30,5 @@ import:
 - package: github.com/DataDrake/byte-trie
 - package: github.com/DataDrake/cli-ng
 - package: github.com/jmoiron/sqlx
+- package: github.com/mattn/go-sqlite3
+  version: ^1.6.0

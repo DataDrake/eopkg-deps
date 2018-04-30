@@ -19,7 +19,10 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+    "github.com/DataDrake/eopkg-deps/index"
 	"github.com/jmoiron/sqlx"
+	// Since this is the only place we will use sqlite directly
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // SqliteStore is a backing store built on sqlite
@@ -34,7 +37,7 @@ func NewSqliteStore() Store {
 }
 
 const schema = `
-CREATE TABLE IF NOT EXISTS package (
+CREATE TABLE IF NOT EXISTS packages (
     id   INTEGER PRIMARY KEY,
     name TEXT
 );
@@ -175,6 +178,53 @@ func (s *SqliteStore) Delete(left, right string) error {
 	}
 	_, err = s.db.Exec(deleteDeps, leftID, rightID)
 	return err
+}
+
+const deleteTables = `
+    DROP TABLE IF EXISTS packages;
+    DROP TABLE IF EXISTS deps
+`
+
+const insertPackageRaw = "INSERT INTO packages VALUES (?,?)"
+
+// Rebuild rebuilds the store from an Index
+func (s *SqliteStore) Rebuild(i *index.Index) error {
+    s.db.MustExec(deleteTables)
+    s.createTables()
+    tx := s.db.MustBegin()
+    pkgStmt, err := tx.Preparex(insertPackageRaw)
+    if err != nil {
+        return err
+    }
+    // Get ID mappings
+    idMap := make(map[string]int)
+    for id, pkg := range i.Packages {
+        idMap[pkg.Name] = id
+        _, err = pkgStmt.Exec(id, pkg.Name)
+        if err != nil {
+            tx.Rollback()
+            return err
+        }
+    }
+
+    depStmt, err := tx.Preparex(insertDep)
+    if err != nil {
+        tx.Rollback()
+        return err
+    }
+    //Get left-right mappings
+    for leftID, lpkg := range i.Packages {
+        for _, rpkg := range lpkg.RuntimeDependencies {
+            rightID := idMap[rpkg]
+            _, err = depStmt.Exec(leftID,rightID)
+            if err != nil {
+                tx.Rollback()
+                return err
+            }
+        }
+    }
+
+    return tx.Commit()
 }
 
 // Close deinitializes the connection to the backend store

@@ -1,5 +1,5 @@
-hash: 8cdbbca1122773cf239c69a6389655f1716aa56e516b9fef92295e32b10950c7
-updated: 2018-04-30T11:00:18.581689815-04:00
+hash: 4d76d95333364ceae13078e5379e9f4dd8c9301549445362c79b143f22eb13a3
+updated: 2018-04-30T11:28:32.596733866-04:00
 imports:
 - name: github.com/codegangsta/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
@@ -40,6 +40,8 @@ imports:
   version: c7af12943936e8c39859482e61f0574c2fd7fc75
 - name: github.com/Masterminds/vcs
   version: 6f1c6d150500e452704e9863f68c2559f58616bf
+- name: github.com/mattn/go-sqlite3
+  version: 6c771bb9887719704b210e87e934f08be014bdb1
 - name: github.com/mattn/kinako
   version: 332c0a7e205a29536e672337a4bea6c7a96b04c1
   subpackages:

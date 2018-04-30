@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/index"
-	//"github.com/DataDrake/eopkg-deps/storage"
+	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 )
 
@@ -45,6 +45,17 @@ func RebuildRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf("Failed to load index, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
-	i.Graph()
+	//i.Graph()
+	s := storage.NewStore()
+    err  = s.Open("/tmp/eopkg-deps.db")
+	if err != nil {
+		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
+		os.Exit(1)
+	}
+	err = s.Rebuild(i)
+	if err != nil {
+		fmt.Printf("Failed to rebuild DB, reason: '%s'\n", err.Error())
+		os.Exit(1)
+	}
 	os.Exit(0)
 }
