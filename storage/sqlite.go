@@ -67,7 +67,7 @@ func (s *SqliteStore) Open(location string) error {
 	return nil
 }
 
-const getPackage = "SLEECT id FROM packages WHERE name=?"
+const getPackage = "SELECT id FROM packages WHERE name=?"
 
 func (s *SqliteStore) nameToID(name string) (int, error) {
 	var id int
