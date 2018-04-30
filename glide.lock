@@ -1,12 +1,22 @@
-hash: 484a2538b7457e8160a1a87b3f10f5c5f8164242902d587986fc9a580c903543
-updated: 2018-02-18T15:33:44.465694409-05:00
+hash: 8cdbbca1122773cf239c69a6389655f1716aa56e516b9fef92295e32b10950c7
+updated: 2018-04-30T11:00:18.581689815-04:00
 imports:
 - name: github.com/codegangsta/cli
   version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: github.com/DataDrake/byte-trie
   version: 7d40bab872ac7c8109ff06c25d103424fa696da0
 - name: github.com/DataDrake/cli-ng
-  version: 88ed6a27f5ac4f6a5a336ed2c5a4e9ad7e4ce423
+  version: 893a48a6183e2e7040fefc707487b3e423ffff3e
+  subpackages:
+  - cmd
+  - options
+  - translate
+- name: github.com/jmoiron/sqlx
+  version: 2aeb6a910c2b94f2d5eb53d9895d80e27264ec41
+  subpackages:
+  - reflectx
+- name: github.com/leonelquinteros/gotext
+  version: 92b69ffa4cc0895b83b42f50065e9de5a3c32960
 - name: github.com/Masterminds/glide
   version: 67790b3dbede72cfdc54aa53be4706322c9499e0
   subpackages:
@@ -27,11 +37,17 @@ imports:
   - tree
   - util
 - name: github.com/Masterminds/semver
-  version: 15d8430ab86497c5c0da827b748823945e1cf1e1
+  version: c7af12943936e8c39859482e61f0574c2fd7fc75
 - name: github.com/Masterminds/vcs
   version: 6f1c6d150500e452704e9863f68c2559f58616bf
+- name: github.com/mattn/kinako
+  version: 332c0a7e205a29536e672337a4bea6c7a96b04c1
+  subpackages:
+  - ast
+  - parser
+  - vm
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: gopkg.in/yaml.v2
-  version: d670f9405373e636a5a2765eea47fac0c9bc91a4
+  version: 7f97868eec74b32b0982dd158a51a446d1da7eb5
 testImports: []

@@ -29,3 +29,4 @@ import:
 - package: gopkg.in/yaml.v2
 - package: github.com/DataDrake/byte-trie
 - package: github.com/DataDrake/cli-ng
+- package: github.com/jmoiron/sqlx

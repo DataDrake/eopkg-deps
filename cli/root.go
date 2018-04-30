@@ -14,12 +14,23 @@
 // limitations under the License.
 //
 
-package main
+package cli
 
 import (
-    "github.com/DataDrake/eopkg-deps/cli"
+	"github.com/DataDrake/cli-ng/cmd"
 )
 
-func main() {
-    cli.Root.Run()
+// Root is the main command for this application
+var Root *cmd.RootCMD
+
+func init() {
+	// Build Application
+	Root = &cmd.RootCMD{
+		Name:  "eopkg-deps",
+		Short: "Manage and work with eopkg dependencies",
+	}
+	// Setup the Sub-Commands
+	Root.RegisterCMD(&cmd.Help)
+	Root.RegisterCMD(&Rebuild)
+	Root.RegisterCMD(&Update)
 }

@@ -7,7 +7,7 @@ GOBIN    = build/bin
 GOSRC    = build/src
 PROJROOT = $(GOSRC)/github.com/DataDrake
 PKGNAME  = eopkg-deps
-SUBPKGS  = cli storage
+SUBPKGS  = cli index storage
 
 DESTDIR ?=
 PREFIX  ?= /usr
@@ -32,7 +32,7 @@ setup:
 	@if [ ! -d $(PROJROOT)/$(PKGNAME) ]; then ln -s $(shell pwd) $(PROJROOT)/$(PKGNAME); fi
 	@$(call task,Getting dependencies...)
 	@go get github.com/Masterminds/glide
-	@$(GOBIN)/glide up
+	@$(GOBIN)/glide install
 	@$(call pass,SETUP)
 
 test: build
@@ -45,7 +45,7 @@ validate: golint-setup
 	@for d in $(SUBPKGS); do $(GOCC) fmt -x ./$$d/...|| exit 1; done || $(GOCC) fmt -x $(PKGNAME).go
 	@$(call pass,FORMAT)
 	@$(call stage,VET)
-	@for d in $(SUBPKGS); do $(GOCC) vet -x ./$$d/...|| exit 1; done || $(GOCC) vet -x $(PKGNAME).go
+	@for d in $(SUBPKGS); do $(GOCC) vet -x ./$$d/...; done || $(GOCC) vet -x $(PKGNAME).go
 	@$(call pass,VET)
 	@$(call stage,LINT)
 	@for d in $(SUBPKGS); do $(GOBIN)/golint -set_exit_status ./$$d/... || exit 1; done || $(GOBIN)/golint -set_exit_status $(PKGNAME).go || exit 1;

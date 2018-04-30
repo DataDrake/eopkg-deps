@@ -14,12 +14,28 @@
 // limitations under the License.
 //
 
-package main
+package cli
 
 import (
-    "github.com/DataDrake/eopkg-deps/cli"
+	"github.com/DataDrake/cli-ng/cmd"
+	//"github.com/DataDrake/eopkg-deps/storage"
+	"os"
 )
 
-func main() {
-    cli.Root.Run()
+// Update opens the datastore and updates it based on the current eopkg index
+var Update = cmd.CMD{
+	Name:  "update",
+	Alias: "up",
+	Short: "Updates the datastore from the eopkg index",
+	Args:  &UpdateArgs{},
+	Run:   UpdateRun,
+}
+
+// UpdateArgs contains the arguments for the "update" subcommand
+type UpdateArgs struct{}
+
+// UpdateRun carries out the "update" subcommand
+func UpdateRun(r *cmd.RootCMD, c *cmd.CMD) {
+	//args := c.Args.(*UpdateArgs)
+	os.Exit(0)
 }

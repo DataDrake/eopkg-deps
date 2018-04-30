@@ -14,12 +14,24 @@
 // limitations under the License.
 //
 
-package main
+package storage
 
 import (
-    "github.com/DataDrake/eopkg-deps/cli"
+	"bytes"
 )
 
-func main() {
-    cli.Root.Run()
+// Pair associates a Key with its index in the BitMap
+type Pair struct {
+	Key   []byte
+	Index uint64
+}
+
+// MatchKey checks if a key matches the current Pair's key
+func (p Pair) MatchKey(key []byte) bool {
+	return bytes.Equal(key, p.Key)
+}
+
+// MatchIndex checks if an index matches the current Pair's index
+func (p Pair) MatchIndex(index uint64) bool {
+	return p.Index == index
 }
