@@ -22,6 +22,7 @@ import (
 	"github.com/DataDrake/eopkg-deps/index"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
+	"os/user"
 )
 
 // Rebuild creats a new datastore and populates it from the currrent eopkg index
@@ -47,7 +48,12 @@ func RebuildRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 	//i.Graph()
 	s := storage.NewStore()
-    err  = s.Open("/tmp/eopkg-deps.db")
+	curr, err := user.Current()
+	if err != nil {
+		fmt.Printf("Failed to get user, reason: '%s'\n", err.Error())
+		os.Exit(1)
+	}
+	err = s.Open(curr.HomeDir + "/.cache/eopkg-deps.db")
 	if err != nil {
 		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
 		os.Exit(1)

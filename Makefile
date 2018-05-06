@@ -1,13 +1,24 @@
 include Makefile.waterlog
 
-GOPATH   = $(shell pwd)/build
-GOCC     = GOPATH=$(GOPATH) go
+PKGNAME  = eopkg-deps
+SUBPKGS  = cli index storage
+PROJREPO = github.com/DataDrake
 
 GOBIN    = build/bin
 GOSRC    = build/src
-PROJROOT = $(GOSRC)/github.com/DataDrake
-PKGNAME  = eopkg-deps
-SUBPKGS  = cli index storage
+PROJROOT = $(GOSRC)/$(PROJREPO)
+
+LDFLAGS   = -ldflags "-s -w"
+TAGS      = --tags "libsqlite3 linux"
+GOCC      = GOPATH=$(shell pwd)/build go
+GOFMT     = $(GOCC) fmt -x
+GOGET     = $(GOCC) get $(LDFLAGS)
+GOINSTALL = $(GOCC) install -v $(LDFLAGS) $(TAGS)
+GOTEST    = $(GOCC) test -x
+GOVET     = $(GOCC) vet -x
+
+MEGACHECK = $(GOBIN)/megacheck
+GOLINT    = $(GOBIN)/golint -set_exit_status
 
 DESTDIR ?=
 PREFIX  ?= /usr
@@ -17,7 +28,7 @@ all: build
 
 build: setup
 	@$(call stage,BUILD)
-	@$(GOCC) install -v github.com/DataDrake/$(PKGNAME)
+	@$(GOINSTALL) $(PROJREPO)/$(PKGNAME)
 	@$(call pass,BUILD)
 
 setup:
@@ -31,33 +42,40 @@ setup:
 	@$(call task,Setting up symlinks...)
 	@if [ ! -d $(PROJROOT)/$(PKGNAME) ]; then ln -s $(shell pwd) $(PROJROOT)/$(PKGNAME); fi
 	@$(call task,Getting dependencies...)
-	@go get github.com/Masterminds/glide
+	@if [ ! -e $(GOBIN)/glide ]; then $(GOGET) github.com/Masterminds/glide; rm -rf build/src/github.com/Masterminds; fi
 	@$(GOBIN)/glide install
 	@$(call pass,SETUP)
 
 test: build
 	@$(call stage,TEST)
-	@for d in $(SUBPKGS); do $(GOCC) test -cover ./$$d/... || exit 1; done
+	@for d in $(SUBPKGS); do $(GOTEST) ./$$d/... || exit 1; done
 	@$(call pass,TEST)
 
-validate: golint-setup
+validate: setup-validate
 	@$(call stage,FORMAT)
-	@for d in $(SUBPKGS); do $(GOCC) fmt -x ./$$d/...|| exit 1; done || $(GOCC) fmt -x $(PKGNAME).go
+	@for d in $(SUBPKGS); do $(GOFMT) ./$$d/...|| exit 1; done || $(GOFMT) $(PKGNAME).go
 	@$(call pass,FORMAT)
 	@$(call stage,VET)
-	@for d in $(SUBPKGS); do $(GOCC) vet -x ./$$d/...; done || $(GOCC) vet -x $(PKGNAME).go
+	@for d in $(SUBPKGS); do $(MEGACHECK) ./$$d || exit 1; done || $(MEGACHECK) $(PKGNAME).go || exit 1
 	@$(call pass,VET)
 	@$(call stage,LINT)
-	@for d in $(SUBPKGS); do $(GOBIN)/golint -set_exit_status ./$$d/... || exit 1; done || $(GOBIN)/golint -set_exit_status $(PKGNAME).go || exit 1;
+	@for d in $(SUBPKGS); do $(GOLINT) ./$$d/... || exit 1; done || $(GOLINT) $(PKGNAME).go || exit 1;
 	@$(call pass,LINT)
 
-golint-setup:
+setup-validate:
+	@if [ ! -e $(GOBIN)/megacheck ]; then \
+	    printf "Installing megacheck..."; \
+	    $(GOGET) honnef.co/go/tools/cmd/megacheck; \
+	    printf "DONE\n\n"; \
+	fi
+	@if [ -d build/src/honnef.co ]; then rm -rf build/src/honnef.co; fi
 	@if [ ! -e $(GOBIN)/golint ]; then \
 	    printf "Installing golint..."; \
-	    $(GOCC) get -u github.com/golang/lint/golint; \
+	    $(GOGET) github.com/golang/lint/golint; \
 	    printf "DONE\n\n"; \
-	    rm -rf $(GOPATH)/src/golang.org $(GOPATH)/src/github.com/golang $(GOPATH)/pkg; \
 	fi
+	@if [ -d build/src/golang.org ]; then rm -rf build/src/golang.org; fi
+	@if [ -d build/src/github.com/golang ]; then rm -rf build/src/github.com/golang; fi
 
 install:
 	@$(call stage,INSTALL)

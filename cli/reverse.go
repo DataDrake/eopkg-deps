@@ -21,7 +21,8 @@ import (
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
-    "sort"
+	"os/user"
+	"sort"
 )
 
 // Reverse gets a list of packages that depend on this package
@@ -34,15 +35,20 @@ var Reverse = cmd.CMD{
 }
 
 // ReverseArgs contains the arguments for the "reverse" subcommand
-type ReverseArgs struct{
-    Package string `desc:"the name of the package"`
+type ReverseArgs struct {
+	Package string `desc:"the name of the package"`
 }
 
 // ReverseRun carries out the "Reverse" subcommand
 func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 	args := c.Args.(*ReverseArgs)
 	s := storage.NewStore()
-    err  := s.Open("/tmp/eopkg-deps.db")
+	curr, err := user.Current()
+	if err != nil {
+		fmt.Printf("Failed to get user, reason: '%s'\n", err.Error())
+		os.Exit(1)
+	}
+	err = s.Open(curr.HomeDir + "/.cache/eopkg-deps.db")
 	if err != nil {
 		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
 		os.Exit(1)
@@ -52,11 +58,11 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf("Failed to resolve reverse deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
-    sort.Strings(lefts)
-    fmt.Printf("Name:\n\t%s\n\nReverse Dependencies:\n", args.Package)
-    for _, left := range lefts {
-        fmt.Printf("\t%s\n", left)
-    }
-    fmt.Println()
+	sort.Strings(lefts)
+	fmt.Printf("Name:\n\t%s\n\nReverse Dependencies:\n", args.Package)
+	for _, left := range lefts {
+		fmt.Printf("\t%s\n", left)
+	}
+	fmt.Println()
 	os.Exit(0)
 }

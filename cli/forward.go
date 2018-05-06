@@ -21,7 +21,8 @@ import (
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
-    "sort"
+	"os/user"
+	"sort"
 )
 
 // Forward gets a list of packages that this package depends on
@@ -34,15 +35,20 @@ var Forward = cmd.CMD{
 }
 
 // ForwardArgs contains the arguments for the "forward" subcommand
-type ForwardArgs struct{
-    Package string `desc:"the name of the package"`
+type ForwardArgs struct {
+	Package string `desc:"the name of the package"`
 }
 
 // ForwardRun carries out the "forward" subcommand
 func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 	args := c.Args.(*ForwardArgs)
 	s := storage.NewStore()
-    err  := s.Open("/tmp/eopkg-deps.db")
+	curr, err := user.Current()
+	if err != nil {
+		fmt.Printf("Failed to get user, reason: '%s'\n", err.Error())
+		os.Exit(1)
+	}
+	err = s.Open(curr.HomeDir + "/.cache/eopkg-deps.db")
 	if err != nil {
 		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
 		os.Exit(1)
@@ -52,11 +58,11 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf("Failed to resolve forward deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
-    sort.Strings(rights)
-    fmt.Printf("Name:\n\t%s\n\nDependencies:\n", args.Package)
-    for _, right := range rights {
-        fmt.Printf("\t%s\n", right)
-    }
-    fmt.Println()
+	sort.Strings(rights)
+	fmt.Printf("Name:\n\t%s\n\nDependencies:\n", args.Package)
+	for _, right := range rights {
+		fmt.Printf("\t%s\n", right)
+	}
+	fmt.Println()
 	os.Exit(0)
 }
