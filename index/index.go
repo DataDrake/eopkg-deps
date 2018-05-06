@@ -25,7 +25,7 @@ import (
 const digraph string = `digraph {
 ranksep=2;
 rankdir=LR;
-{{range $package := .Packages}}{{$name := .Name}}{{range $dep := .RuntimeDependencies}}    "{{$name}}" -> "{{$dep}}";
+{{range $package := .Packages}}{{$name := .Name}}{{range $dep := .RuntimeDependencies}}    "{{$name}}" -> "{{$dep.Name}}";
 {{end}}{{end}}
 }
 `
@@ -39,12 +39,6 @@ func init() {
 	if err != nil {
 		panic(err.Error())
 	}
-}
-
-// Package represents a single package and its immediate dependencies
-type Package struct {
-	Name                string   `xml:"Name"`
-	RuntimeDependencies []string `xml:"RuntimeDependencies>Dependency"`
 }
 
 // Index represents all of the packages in the eopkg index

@@ -27,9 +27,9 @@ type Store interface {
 	// Put associates (left) -> (right)
 	Put(left, right string) error
 	// GetLeft returns: (left) -> *
-	GetLeft(left string) ([]string, error)
+	GetLeft(left string) (Packages, error)
 	// GetRight returns: * -> (right)
-	GetRight(right string) ([]string, error)
+	GetRight(right string) (Packages, error)
 	// Delete breaks the association
 	Delete(left, right string) error
 	// Rebuild clears the current store and rebuilds the contents from the provided index

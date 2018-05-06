@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/user"
 	"sort"
+    "text/tabwriter"
 )
 
 // Forward gets a list of packages that this package depends on
@@ -58,11 +59,18 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf("Failed to resolve forward deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
-	sort.Strings(rights)
-	fmt.Printf("Name:\n\t%s\n\nDependencies:\n", args.Package)
+	sort.Sort(rights)
+	fmt.Printf("\033[1mPackage:\033[0m %s\n\n", args.Package)
+    if len(rights) == 0 {
+        fmt.Println("No dependencies found.\n")
+        os.Exit(0)
+    }
+    w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+    fmt.Fprintln(w, "\033[1mDependency\tSince Release")
 	for _, right := range rights {
-		fmt.Printf("\t%s\n", right)
+		fmt.Fprintf(w, "\033[0m%s\t%d\n", right.Name, right.Release)
 	}
+    w.Flush()
 	fmt.Println()
 	os.Exit(0)
 }

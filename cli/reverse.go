@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/user"
 	"sort"
+    "text/tabwriter"
 )
 
 // Reverse gets a list of packages that depend on this package
@@ -58,11 +59,18 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf("Failed to resolve reverse deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
-	sort.Strings(lefts)
-	fmt.Printf("Name:\n\t%s\n\nReverse Dependencies:\n", args.Package)
-	for _, left := range lefts {
-		fmt.Printf("\t%s\n", left)
-	}
-	fmt.Println()
+	sort.Sort(lefts)
+    fmt.Printf("\033[1mPackage:\033[0m %s\n\n", args.Package)
+    if len(lefts) == 0 {
+        fmt.Println("No reverse dependencies found.\n")
+        os.Exit(0)
+    }
+    w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+    fmt.Fprintf(w, "\033[1mReverse Dependency\tSince %s Release\n", args.Package)
+    for _, left := range lefts {
+        fmt.Fprintf(w, "\033[0m%s\t%d\n", left.Name, left.Release)
+    }
+    w.Flush()
+    fmt.Println()
 	os.Exit(0)
 }

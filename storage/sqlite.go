@@ -39,12 +39,14 @@ func NewSqliteStore() Store {
 const schema = `
 CREATE TABLE IF NOT EXISTS packages (
     id   INTEGER PRIMARY KEY,
-    name TEXT
+    name TEXT,
+    rel  INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS deps (
-    left_id  INTEGER,
-    right_id INTEGER
+    left_id   INTEGER,
+    right_id  INTEGER,
+    rel INTEGER
 )
 `
 
@@ -79,9 +81,9 @@ func (s *SqliteStore) nameToID(name string) (int, error) {
 	return id, nil
 }
 
-const insertPackage = "INSERT INTO packages VALUES (NULL,?)"
+const insertPackage = "INSERT INTO packages VALUES (NULL,?,?)"
 const getDep = "SELECT count(*) FROM deps WHERE left_id=? AND right_id=?"
-const insertDep = "INSERT INTO deps VALUES (?,?)"
+const insertDep = "INSERT INTO deps VALUES (?,?,?)"
 
 // Put associates (left) -> (right)
 func (s *SqliteStore) Put(left, right string) error {
@@ -121,40 +123,62 @@ func (s *SqliteStore) Put(left, right string) error {
 }
 
 const getLeft = `
-SELECT name FROM packages INNER JOIN (
-    SELECT right_id FROM deps WHERE left_id=?
+SELECT name, rel2 AS rel FROM packages INNER JOIN (
+    SELECT right_id, rel AS rel2 FROM deps WHERE left_id=?
 ) ON packages.id=right_id
 `
 
 // GetLeft returns: (left) -> *
-func (s *SqliteStore) GetLeft(left string) ([]string, error) {
+func (s *SqliteStore) GetLeft(left string) (Packages, error) {
 	row := s.db.QueryRowx(getPackage, left)
 	var leftID int
 	err := row.Scan(&leftID)
 	if err != nil {
 		return nil, err
 	}
-	var rights []string
-	err = s.db.Select(&rights, getLeft, leftID)
+    rights := make(Packages,0)
+	rows, err := s.db.Queryx(getLeft, leftID)
+    if err != nil {
+        return rights, err
+    }
+    for rows.Next() {
+        var p Package
+        err := rows.StructScan(&p)
+        if err != nil {
+            return rights, err
+        }
+        rights = append(rights, p)
+    }
 	return rights, err
 }
 
 const getRight = `
-SELECT name FROM packages INNER JOIN (
-    SELECT left_id FROM deps WHERE right_id=?
+SELECT name, rel2 AS rel FROM packages INNER JOIN (
+    SELECT left_id, rel AS rel2 FROM deps WHERE right_id=?
 ) ON packages.id=left_id
 `
 
 // GetRight returns: * -> (right)
-func (s *SqliteStore) GetRight(right string) ([]string, error) {
+func (s *SqliteStore) GetRight(right string) (Packages, error) {
 	row := s.db.QueryRowx(getPackage, right)
 	var rightID int
 	err := row.Scan(&rightID)
 	if err != nil {
 		return nil, err
 	}
-	var lefts []string
-	err = s.db.Select(&lefts, getRight, rightID)
+	lefts := make(Packages,0)
+	rows, err := s.db.Queryx(getRight, rightID)
+    if err != nil {
+        return lefts, err
+    }
+    for rows.Next() {
+        var p Package
+        err := rows.StructScan(&p)
+        if err != nil {
+            return lefts, err
+        }
+        lefts = append(lefts, p)
+    }
 	return lefts, err
 }
 
@@ -185,7 +209,7 @@ const deleteTables = `
     DROP TABLE IF EXISTS deps
 `
 
-const insertPackageRaw = "INSERT INTO packages VALUES (?,?)"
+const insertPackageRaw = "INSERT INTO packages VALUES (?,?,?)"
 
 // Rebuild rebuilds the store from an Index
 func (s *SqliteStore) Rebuild(i *index.Index) error {
@@ -200,7 +224,7 @@ func (s *SqliteStore) Rebuild(i *index.Index) error {
 	idMap := make(map[string]int)
 	for id, pkg := range i.Packages {
 		idMap[pkg.Name] = id
-		_, err = pkgStmt.Exec(id, pkg.Name)
+		_, err = pkgStmt.Exec(id, pkg.Name, pkg.Releases[0].Number)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -215,8 +239,8 @@ func (s *SqliteStore) Rebuild(i *index.Index) error {
 	//Get left-right mappings
 	for leftID, lpkg := range i.Packages {
 		for _, rpkg := range lpkg.RuntimeDependencies {
-			rightID := idMap[rpkg]
-			_, err = depStmt.Exec(leftID, rightID)
+			rightID := idMap[rpkg.Name]
+			_, err = depStmt.Exec(leftID, rightID, rpkg.Release)
 			if err != nil {
 				tx.Rollback()
 				return err
