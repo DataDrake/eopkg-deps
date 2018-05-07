@@ -22,16 +22,20 @@ type Package struct {
 	Release int    `db:"rel"`
 }
 
+// Packages is a sortable type for a list of Package struct
 type Packages []Package
 
+// Len returns the length of the list
 func (pkgs Packages) Len() int {
 	return len(pkgs)
 }
 
+// Less is based on the names of the packages only
 func (pkgs Packages) Less(i, j int) bool {
 	return pkgs[i].Name < pkgs[j].Name
 }
 
+// Swap switches the packages when sortint
 func (pkgs Packages) Swap(i, j int) {
 	pkgs[i], pkgs[j] = pkgs[j], pkgs[i]
 }

@@ -136,19 +136,19 @@ func (s *SqliteStore) GetLeft(left string) (Packages, error) {
 	if err != nil {
 		return nil, err
 	}
-    rights := make(Packages,0)
+	rights := make(Packages, 0)
 	rows, err := s.db.Queryx(getLeft, leftID)
-    if err != nil {
-        return rights, err
-    }
-    for rows.Next() {
-        var p Package
-        err := rows.StructScan(&p)
-        if err != nil {
-            return rights, err
-        }
-        rights = append(rights, p)
-    }
+	if err != nil {
+		return rights, err
+	}
+	for rows.Next() {
+		var p Package
+		err := rows.StructScan(&p)
+		if err != nil {
+			return rights, err
+		}
+		rights = append(rights, p)
+	}
 	return rights, err
 }
 
@@ -166,19 +166,19 @@ func (s *SqliteStore) GetRight(right string) (Packages, error) {
 	if err != nil {
 		return nil, err
 	}
-	lefts := make(Packages,0)
+	lefts := make(Packages, 0)
 	rows, err := s.db.Queryx(getRight, rightID)
-    if err != nil {
-        return lefts, err
-    }
-    for rows.Next() {
-        var p Package
-        err := rows.StructScan(&p)
-        if err != nil {
-            return lefts, err
-        }
-        lefts = append(lefts, p)
-    }
+	if err != nil {
+		return lefts, err
+	}
+	for rows.Next() {
+		var p Package
+		err := rows.StructScan(&p)
+		if err != nil {
+			return lefts, err
+		}
+		lefts = append(lefts, p)
+	}
 	return lefts, err
 }
 
