@@ -40,35 +40,54 @@ type ForwardArgs struct {
 	Package string `desc:"the name of the package"`
 }
 
+const (
+	// DependencyHeader is a table heading for forward dependencies
+	DependencyHeader = "Dependency\tSince Release"
+	// DependencyHeaderColor is a table heading for forward dependencies, in color
+	DependencyHeaderColor = "\033[1mDependency\tSince Release"
+)
+
 // ForwardRun carries out the "forward" subcommand
 func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
+	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*ForwardArgs)
 	s := storage.NewStore()
 	curr, err := user.Current()
 	if err != nil {
-		fmt.Printf("Failed to get user, reason: '%s'\n", err.Error())
+		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + "/.cache/eopkg-deps.db")
+	err = s.Open(curr.HomeDir + DefaultDBLocation)
 	if err != nil {
-		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
+		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
 	rights, err := s.GetLeft(args.Package)
 	if err != nil {
-		fmt.Printf("Failed to resolve forward deps, reason: '%s'\n", err.Error())
+		fmt.Printf("Failed to get forward deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
 	sort.Sort(rights)
-	fmt.Printf("\033[1mPackage:\033[0m %s\n\n", args.Package)
+	if flags.NoColor {
+		fmt.Printf(PackageFormat, args.Package)
+	} else {
+		fmt.Printf(PackageFormatColor, args.Package)
+	}
 	if len(rights) == 0 {
 		fmt.Println("No dependencies found.\n")
 		os.Exit(0)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "\033[1mDependency\tSince Release")
+	var rowFormat string
+	if flags.NoColor {
+		fmt.Println(DependencyHeader, args.Package)
+		rowFormat = RowFormat
+	} else {
+		fmt.Println(DependencyHeaderColor, args.Package)
+		rowFormat = RowFormatColor
+	}
 	for _, right := range rights {
-		fmt.Fprintf(w, "\033[0m%s\t%d\n", right.Name, right.Release)
+		fmt.Fprintf(w, rowFormat, right.Name, right.Release)
 	}
 	w.Flush()
 	fmt.Println()

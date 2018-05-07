@@ -40,18 +40,26 @@ type ReverseArgs struct {
 	Package string `desc:"the name of the package"`
 }
 
+const (
+	// ReverseDependencyHeader is a table heading for reverse dependencies
+	ReverseDependencyHeader = "Reverse Dependency\tRelease"
+	// ReverseDependencyHeaderColor is a table heading for reverse dependencies, in color
+	ReverseDependencyHeaderColor = "\033[1mReverse Dependency\tRelease"
+)
+
 // ReverseRun carries out the "Reverse" subcommand
 func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
+	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*ReverseArgs)
 	s := storage.NewStore()
 	curr, err := user.Current()
 	if err != nil {
-		fmt.Printf("Failed to get user, reason: '%s'\n", err.Error())
+		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + "/.cache/eopkg-deps.db")
+	err = s.Open(curr.HomeDir + DefaultDBLocation)
 	if err != nil {
-		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
+		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
 	lefts, err := s.GetRight(args.Package)
@@ -60,15 +68,27 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		os.Exit(1)
 	}
 	sort.Sort(lefts)
-	fmt.Printf("\033[1mPackage:\033[0m %s\n\n", args.Package)
+	if flags.NoColor {
+		fmt.Printf(PackageFormat, args.Package)
+	} else {
+		fmt.Printf(PackageFormatColor, args.Package)
+	}
+
 	if len(lefts) == 0 {
 		fmt.Println("No reverse dependencies found.\n")
 		os.Exit(0)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(w, "\033[1mReverse Dependency\tSince %s Release\n", args.Package)
+	var rowFormat string
+	if flags.NoColor {
+		fmt.Println(ReverseDependencyHeader, args.Package)
+		rowFormat = RowFormat
+	} else {
+		fmt.Println(ReverseDependencyHeaderColor, args.Package)
+		rowFormat = RowFormatColor
+	}
 	for _, left := range lefts {
-		fmt.Fprintf(w, "\033[0m%s\t%d\n", left.Name, left.Release)
+		fmt.Fprintf(w, rowFormat, left.Name, left.Release)
 	}
 	w.Flush()
 	fmt.Println()

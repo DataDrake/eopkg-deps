@@ -41,7 +41,7 @@ type RebuildArgs struct{}
 func RebuildRun(r *cmd.RootCMD, c *cmd.CMD) {
 	//args := c.Args.(*RebuildArgs)
 	i := index.NewIndex()
-	err := i.Load("/var/lib/eopkg/index/Unstable/eopkg-index.xml")
+	err := i.Load(DefaultIndexLocation)
 	if err != nil {
 		fmt.Printf("Failed to load index, reason: '%s'\n", err.Error())
 		os.Exit(1)
@@ -50,12 +50,12 @@ func RebuildRun(r *cmd.RootCMD, c *cmd.CMD) {
 	s := storage.NewStore()
 	curr, err := user.Current()
 	if err != nil {
-		fmt.Printf("Failed to get user, reason: '%s'\n", err.Error())
+		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + "/.cache/eopkg-deps.db")
+	err = s.Open(curr.HomeDir + DefaultDBLocation)
 	if err != nil {
-		fmt.Printf("Failed to open DB, reason: '%s'\n", err.Error())
+		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
 	err = s.Rebuild(i)

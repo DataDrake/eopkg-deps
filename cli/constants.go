@@ -16,31 +16,22 @@
 
 package cli
 
-import (
-	"github.com/DataDrake/cli-ng/cmd"
+// Paths
+const (
+	DefaultDBLocation    = "/.cache/eopkg-deps.db"
+	DefaultIndexLocation = "/var/lib/eopkg/index/Unstable/eopkg-index.xml"
 )
 
-// Root is the main command for this application
-var Root *cmd.RootCMD
+// Error Strings
+const (
+	DBOpenErrorFormat = "Failed to open DB, reason: '%s'\n"
+	UserErrorFormat   = "Failed to get user, reason: '%s'\n"
+)
 
-// GlobalFlags contains flags applicable to all sub-commands
-type GlobalFlags struct {
-	NoColor bool `short:"N" long:"no-color" desc:"Disable coloring of output text"`
-}
-
-func init() {
-	// Build Application
-	Root = &cmd.RootCMD{
-		Name:  "eopkg-deps",
-		Short: "Manage and work with eopkg dependencies",
-		Flags: &GlobalFlags{
-			NoColor: false,
-		},
-	}
-	// Setup the Sub-Commands
-	Root.RegisterCMD(&cmd.Help)
-	Root.RegisterCMD(&Forward)
-	Root.RegisterCMD(&Reverse)
-	Root.RegisterCMD(&Rebuild)
-	//Root.RegisterCMD(&Update)
-}
+// Format Strings
+const (
+	PackageFormat      = "Package: %s\n\n"
+	PackageFormatColor = "\033[1mPackage:\033[0m %s\n\n"
+	RowFormat          = "%s\t%d\n"
+	RowFormatColor     = "\033[0m%s\t%d\n"
+)
