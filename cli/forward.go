@@ -62,8 +62,9 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	rights, err := s.GetLeft(args.Package)
+	rights, err := s.GetForward(args.Package)
 	if err != nil {
+		s.Close()
 		fmt.Printf("Failed to get forward deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
@@ -74,6 +75,7 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(PackageFormatColor, args.Package)
 	}
 	if len(rights) == 0 {
+		s.Close()
 		fmt.Println("No dependencies found.\n")
 		os.Exit(0)
 	}
@@ -91,5 +93,6 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 	w.Flush()
 	fmt.Println()
+	s.Close()
 	os.Exit(0)
 }

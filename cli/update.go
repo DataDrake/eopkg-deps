@@ -17,16 +17,19 @@
 package cli
 
 import (
+	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
-	//"github.com/DataDrake/eopkg-deps/storage"
+	"github.com/DataDrake/eopkg-deps/index"
+	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
+	"os/user"
 )
 
-// Update opens the datastore and updates it based on the current eopkg index
+// Update creats a new datastore and populates it from the current eopkg index
 var Update = cmd.CMD{
 	Name:  "update",
 	Alias: "up",
-	Short: "Updates the datastore from the eopkg index",
+	Short: "Update rebuilds the datastore from the eopkg index",
 	Args:  &UpdateArgs{},
 	Run:   UpdateRun,
 }
@@ -36,6 +39,31 @@ type UpdateArgs struct{}
 
 // UpdateRun carries out the "update" subcommand
 func UpdateRun(r *cmd.RootCMD, c *cmd.CMD) {
-	//args := c.Args.(*UpdateArgs)
+	//args := c.Args.(*RebuildArgs)
+	i := index.NewIndex()
+	err := i.Load(DefaultIndexLocation)
+	if err != nil {
+		fmt.Printf("Failed to load index, reason: '%s'\n", err.Error())
+		os.Exit(1)
+	}
+	//i.Graph()
+	s := storage.NewStore()
+	curr, err := user.Current()
+	if err != nil {
+		fmt.Printf(UserErrorFormat, err.Error())
+		os.Exit(1)
+	}
+	err = s.Open(curr.HomeDir + DefaultDBLocation)
+	if err != nil {
+		fmt.Printf(DBOpenErrorFormat, err.Error())
+		os.Exit(1)
+	}
+	err = s.Update(i)
+	if err != nil {
+		fmt.Printf("Failed to update DB, reason: '%s'\n", err.Error())
+		s.Close()
+		os.Exit(1)
+	}
+	s.Close()
 	os.Exit(0)
 }

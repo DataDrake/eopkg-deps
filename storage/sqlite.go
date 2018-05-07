@@ -17,7 +17,6 @@
 package storage
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/DataDrake/eopkg-deps/index"
 	"github.com/jmoiron/sqlx"
@@ -81,142 +80,76 @@ func (s *SqliteStore) nameToID(name string) (int, error) {
 	return id, nil
 }
 
-const insertPackage = "INSERT INTO packages VALUES (NULL,?,?)"
-const getDep = "SELECT count(*) FROM deps WHERE left_id=? AND right_id=?"
-const insertDep = "INSERT INTO deps VALUES (?,?,?)"
-
-// Put associates (left) -> (right)
-func (s *SqliteStore) Put(left, right string) error {
-	leftID, err := s.nameToID(left)
-	if err == sql.ErrNoRows {
-		_, err = s.db.Exec(insertPackage, left)
-		if err != nil {
-			return err
-		}
-		leftID, err = s.nameToID(left)
-	}
-	if err != nil {
-		return err
-	}
-	rightID, err := s.nameToID(right)
-	if err == sql.ErrNoRows {
-		_, err = s.db.Exec(insertPackage, right)
-		if err != nil {
-			return err
-		}
-		rightID, err = s.nameToID(right)
-	}
-	if err != nil {
-		return err
-	}
-	var count int
-	row := s.db.QueryRowx(getDep, leftID, rightID)
-	err = row.Scan(&count)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		_, err = s.db.Exec(insertDep, leftID, rightID)
-		return err
-	}
-	return nil
-}
-
-const getLeft = `
+const getRHS = `
 SELECT name, rel2 AS rel FROM packages INNER JOIN (
     SELECT right_id, rel AS rel2 FROM deps WHERE left_id=?
 ) ON packages.id=right_id
 `
 
-// GetLeft returns: (left) -> *
-func (s *SqliteStore) GetLeft(left string) (Packages, error) {
-	row := s.db.QueryRowx(getPackage, left)
-	var leftID int
-	err := row.Scan(&leftID)
+// GetForward returns: (lhs) -> *
+func (s *SqliteStore) GetForward(lhs string) (Packages, error) {
+	lhsID, err := s.nameToID(lhs)
 	if err != nil {
 		return nil, err
 	}
-	rights := make(Packages, 0)
-	rows, err := s.db.Queryx(getLeft, leftID)
+	rhs := make(Packages, 0)
+	rows, err := s.db.Queryx(getRHS, lhsID)
 	if err != nil {
-		return rights, err
+		return rhs, err
 	}
 	for rows.Next() {
 		var p Package
 		err := rows.StructScan(&p)
 		if err != nil {
-			return rights, err
+			return rhs, err
 		}
-		rights = append(rights, p)
+		rhs = append(rhs, p)
 	}
-	return rights, err
+	return rhs, err
 }
 
-const getRight = `
+const getLHS = `
 SELECT name, rel2 AS rel FROM packages INNER JOIN (
     SELECT left_id, rel AS rel2 FROM deps WHERE right_id=?
 ) ON packages.id=left_id
 `
 
-// GetRight returns: * -> (right)
-func (s *SqliteStore) GetRight(right string) (Packages, error) {
-	row := s.db.QueryRowx(getPackage, right)
-	var rightID int
-	err := row.Scan(&rightID)
+// GetReverse returns: * -> (rhs)
+func (s *SqliteStore) GetReverse(rhs string) (Packages, error) {
+	rhsID, err := s.nameToID(rhs)
 	if err != nil {
 		return nil, err
 	}
-	lefts := make(Packages, 0)
-	rows, err := s.db.Queryx(getRight, rightID)
+	lhs := make(Packages, 0)
+	rows, err := s.db.Queryx(getLHS, rhsID)
 	if err != nil {
-		return lefts, err
+		return lhs, err
 	}
 	for rows.Next() {
 		var p Package
 		err := rows.StructScan(&p)
 		if err != nil {
-			return lefts, err
+			return lhs, err
 		}
-		lefts = append(lefts, p)
+		lhs = append(lhs, p)
 	}
-	return lefts, err
+	return lhs, err
 }
 
-const deleteDeps = "DELETE FROM deps WHERE left_id=? AND right_id=?"
-
-// Delete breaks the association
-func (s *SqliteStore) Delete(left, right string) error {
-	leftID, err := s.nameToID(left)
-	if err == sql.ErrNoRows {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	rightID, err := s.nameToID(right)
-	if err == sql.ErrNoRows {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	_, err = s.db.Exec(deleteDeps, leftID, rightID)
-	return err
-}
-
-const deleteTables = `
+const dropTables = `
     DROP TABLE IF EXISTS packages;
     DROP TABLE IF EXISTS deps
 `
 
-const insertPackageRaw = "INSERT INTO packages VALUES (?,?,?)"
+const insertPackage = "INSERT INTO packages VALUES (?,?,?)"
+const insertDep = "INSERT INTO deps VALUES (?,?,?)"
 
-// Rebuild rebuilds the store from an Index
-func (s *SqliteStore) Rebuild(i *index.Index) error {
-	s.db.MustExec(deleteTables)
+// Update rebuilds the store from an Index
+func (s *SqliteStore) Update(i *index.Index) error {
+	s.db.MustExec(dropTables)
 	s.createTables()
 	tx := s.db.MustBegin()
-	pkgStmt, err := tx.Preparex(insertPackageRaw)
+	pkgStmt, err := tx.Preparex(insertPackage)
 	if err != nil {
 		return err
 	}

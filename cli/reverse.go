@@ -62,9 +62,10 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	lefts, err := s.GetRight(args.Package)
+	lefts, err := s.GetReverse(args.Package)
 	if err != nil {
 		fmt.Printf("Failed to resolve reverse deps, reason: '%s'\n", err.Error())
+		s.Close()
 		os.Exit(1)
 	}
 	sort.Sort(lefts)
@@ -76,6 +77,7 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 
 	if len(lefts) == 0 {
 		fmt.Println("No reverse dependencies found.\n")
+		s.Close()
 		os.Exit(0)
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
@@ -92,5 +94,6 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 	w.Flush()
 	fmt.Println()
+	s.Close()
 	os.Exit(0)
 }

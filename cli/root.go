@@ -41,6 +41,5 @@ func init() {
 	Root.RegisterCMD(&cmd.Help)
 	Root.RegisterCMD(&Forward)
 	Root.RegisterCMD(&Reverse)
-	Root.RegisterCMD(&Rebuild)
-	//Root.RegisterCMD(&Update)
+	Root.RegisterCMD(&Update)
 }

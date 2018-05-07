@@ -24,16 +24,12 @@ import (
 type Store interface {
 	// Open initializes a connection to the backend store
 	Open(location string) error
-	// Put associates (left) -> (right)
-	Put(left, right string) error
-	// GetLeft returns: (left) -> *
-	GetLeft(left string) (Packages, error)
-	// GetRight returns: * -> (right)
-	GetRight(right string) (Packages, error)
-	// Delete breaks the association
-	Delete(left, right string) error
-	// Rebuild clears the current store and rebuilds the contents from the provided index
-	Rebuild(i *index.Index) error
+	// GetForward returns: (left) -> *
+	GetForward(lhs string) (Packages, error)
+	// GetReverse returns: * -> (right)
+	GetReverse(rhs string) (Packages, error)
+	// Update clears the current store and rebuilds the contents from the provided index
+	Update(i *index.Index) error
 	// Close deinitializes the connection to the backend store
 	Close() error
 }
