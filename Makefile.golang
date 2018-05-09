@@ -1,0 +1,12 @@
+GOBIN       = build/bin
+GOSRC       = build/src
+GOPROJROOT  = $(GOSRC)/$(PROJREPO)
+
+GOLDFLAGS   = -ldflags "-s -w"
+GOTAGS      = --tags "libsqlite3 linux"
+GOCC        = GOPATH=$(shell pwd)/build go
+GOFMT       = $(GOCC) fmt -x
+GOGET       = $(GOCC) get $(GOLDFLAGS)
+GOINSTALL   = $(GOCC) install -v $(GOLDFLAGS) $(GOTAGS)
+GOTEST      = $(GOCC) test -x
+GOVET       = $(GOCC) vet
