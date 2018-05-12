@@ -45,8 +45,14 @@ CREATE TABLE IF NOT EXISTS packages (
 CREATE TABLE IF NOT EXISTS deps (
     left_id   INTEGER,
     right_id  INTEGER,
-    rel INTEGER
-)
+    rel       INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS todo (
+    name       TEXT,
+    package_id INTEGER,
+    done       BOOLEAN
+);
 `
 
 func (s *SqliteStore) createTables() {
@@ -136,9 +142,70 @@ func (s *SqliteStore) GetReverse(rhs string) (Packages, error) {
 	return lhs, err
 }
 
+const getToDo = "SELECT count(*) FROM todo WHERE name=?"
+const insertToDo = "INSERT INTO todo VALUES (?, ?, FALSE)"
+
+// StartToDo adds a new package to the todo list
+func (s *SqliteStore) StartToDo(name string) error {
+    var count int
+    err := s.db.Get(&count, getToDo, name)
+    if err != nil {
+        return err
+    }
+    if count > 0 {
+        return fmt.Errorf("Rebuild for package '%s' has already started", name)
+    }
+    id, err := s.nameToID(name)
+    if err != nil {
+        return err
+    }
+    _, err = s.db.Exec(insertToDo, name, id)
+    return err
+}
+
+const getUnblocked =`
+SELECT name FROM todo WHERE package_id
+NOT IN (
+    SELECT left_id FROM deps INNER JOIN (
+        SELECT package_id FROM todo WHERE done=FALSE
+    ) ON right_id=package_id
+);
+`
+const getToDoCount = `SELECT count(*) FROM todo WHERE done=FALSE`
+const getToDoDone = `SELECT count(*) FROM todo WHERE done=TRUE`
+
+// GetToDo gets the currently unblocked packages to rebuild
+func (s *SqliteStore) GetToDo() (Packages, int, int, error) {
+    unblocked := make(Packages, 0)
+	rows, err := s.db.Queryx(getUnblocked)
+	if err != nil {
+		return unblocked, 0, 0, err
+	}
+	for rows.Next() {
+		var name string
+		err := rows.Scan(&name)
+		if err != nil {
+			return unblocked, 0, 0, err
+		}
+		unblocked = append(unblocked, Package{name,0})
+	}
+    var count int
+    err = s.db.Get(&count, getToDoCount);
+	if err != nil {
+		return unblocked, 0, 0, err
+	}
+    var done int
+    err = s.db.Get(&done, getToDoDone);
+	if err != nil {
+		return unblocked, 0, 0, err
+	}
+	return unblocked,count, done, err
+}
+
 const dropTables = `
     DROP TABLE IF EXISTS packages;
-    DROP TABLE IF EXISTS deps
+    DROP TABLE IF EXISTS deps;
+    DROP TABLE IF EXISTS todo;
 `
 
 const insertPackage = "INSERT INTO packages VALUES (?,?,?)"
