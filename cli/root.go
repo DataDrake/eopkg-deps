@@ -44,4 +44,5 @@ func init() {
 	Root.RegisterCMD(&Start)
 	Root.RegisterCMD(&ToDo)
 	Root.RegisterCMD(&Update)
+	Root.RegisterCMD(&Worst)
 }

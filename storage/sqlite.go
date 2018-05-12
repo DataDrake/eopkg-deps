@@ -202,6 +202,37 @@ func (s *SqliteStore) GetToDo() (Packages, int, int, error) {
 	return unblocked, count, done, err
 }
 
+const getWorst = `
+WITH RECURSIVE traverse AS (
+    SELECT left_id FROM deps INNER JOIN packages
+    ON right_id=id WHERE name=?
+    UNION ALL
+    SELECT deps.left_id FROM deps
+        INNER JOIN traverse
+        ON deps.right_id=traverse.left_id
+)
+SELECT name FROM traverse INNER JOIN packages
+ON id=left_id GROUP BY name;
+`
+
+// WorstToDo gets a worst-case list of packages to rebuild
+func (s *SqliteStore) WorstToDo(name string) (Packages, error) {
+	list := make(Packages, 0)
+	rows, err := s.db.Queryx(getWorst, name)
+	if err != nil {
+		return list, err
+	}
+	for rows.Next() {
+		var pName string
+		err := rows.Scan(&pName)
+		if err != nil {
+			return list, err
+		}
+		list = append(list, Package{pName, 0})
+	}
+	return list, err
+}
+
 const dropTables = `
     DROP TABLE IF EXISTS packages;
     DROP TABLE IF EXISTS deps;

@@ -33,6 +33,8 @@ type Store interface {
 	GetToDo() (Packages, int, int, error)
 	// StartToDo adds a new package to the todo list
 	StartToDo(name string) error
+	// WorstToDo gets a worst-case list of packages to rebuild
+	WorstToDo(name string) (Packages, error)
 	// Update clears the current store and rebuilds the contents from the provided index
 	Update(i *index.Index) error
 	// Close deinitializes the connection to the backend store
