@@ -29,10 +29,10 @@ type Store interface {
 	// GetReverse returns: * -> (right)
 	GetReverse(rhs string) (Packages, error)
 	// GetToDo returns a list of unblocked packages that need to be rebuilt,
-    // the count of remaining rebuilds, and the count of completed rebuilds
+	// the count of remaining rebuilds, and the count of completed rebuilds
 	GetToDo() (Packages, int, int, error)
-    // StartToDo adds a new package to the todo list
-    StartToDo(name string) error
+	// StartToDo adds a new package to the todo list
+	StartToDo(name string) error
 	// Update clears the current store and rebuilds the contents from the provided index
 	Update(i *index.Index) error
 	// Close deinitializes the connection to the backend store

@@ -35,7 +35,7 @@ var Start = cmd.CMD{
 
 // StartArgs contains the arguments for the "start" subcommand
 type StartArgs struct {
-    Name string `desc:"the name of the package to rebuild"`
+	Name string `desc:"the name of the package to rebuild"`
 }
 
 // StartRun carries out the "start" subcommand
@@ -59,7 +59,7 @@ func StartRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf("Failed to mark for rebuilds , reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
-    fmt.Printf("Successfully marked '%s' for rebuilds\n", args.Name)
+	fmt.Printf("Successfully marked '%s' for rebuilds\n", args.Name)
 	s.Close()
 	os.Exit(0)
 }

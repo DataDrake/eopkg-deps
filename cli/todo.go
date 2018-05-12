@@ -35,7 +35,7 @@ var ToDo = cmd.CMD{
 }
 
 // ToDoArgs contains the arguments for the "todo" subcommand
-type ToDoArgs struct {}
+type ToDoArgs struct{}
 
 const (
 	// ToDoHeader is a table heading for remaining packages
@@ -71,7 +71,7 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Println("No todo items found.\n")
 		os.Exit(0)
 	}
-    var rowFormat string
+	var rowFormat string
 	if flags.NoColor {
 		fmt.Println(ToDoHeader)
 		rowFormat = "%s\n"
@@ -80,7 +80,7 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 		rowFormat = "\033[0m%s\n"
 	}
 	for _, item := range unblocked {
-		fmt.Printf(rowFormat, item.Name )
+		fmt.Printf(rowFormat, item.Name)
 	}
 	fmt.Println()
 	if flags.NoColor {
