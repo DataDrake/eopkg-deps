@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/eopkg-deps/index"
 	"github.com/jmoiron/sqlx"
+	"strings"
 	// Since this is the only place we will use sqlite directly
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -254,6 +255,10 @@ func (s *SqliteStore) Update(i *index.Index) error {
 	// Get ID mappings
 	idMap := make(map[string]int)
 	for id, pkg := range i.Packages {
+		// skip -devel and -dbginfo packages
+		if strings.HasSuffix(pkg.Name, "-dbginfo") || strings.HasSuffix(pkg.Name, "-devel") {
+			continue
+		}
 		idMap[pkg.Name] = id
 		_, err = pkgStmt.Exec(id, pkg.Name, pkg.Releases[0].Number)
 		if err != nil {
