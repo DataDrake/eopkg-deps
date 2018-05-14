@@ -1,9 +1,9 @@
-include Makefile.golang
-include Makefile.waterlog
-
 PKGNAME  = eopkg-deps
 SUBPKGS  = cli index storage
 PROJREPO = github.com/DataDrake
+
+include Makefile.golang
+include Makefile.waterlog
 
 MEGACHECK = $(GOBIN)/megacheck
 GOLINT    = $(GOBIN)/golint -set_exit_status
@@ -65,7 +65,7 @@ setup-deps:
 	@if [ -d build/src/golang.org ]; then rm -rf build/src/golang.org; fi
 	@if [ -d build/src/github.com/golang ]; then rm -rf build/src/github.com/golang; fi
 	@$(call task,Getting build dependencies...)
-	@$(GOBIN)/dep ensure
+	@cd $(GOPROJROOT)/$(PKGNAME); GOPATH=$(GOPATH) $(GOBIN)/dep ensure
 
 install:
 	@$(call stage,INSTALL)
