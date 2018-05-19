@@ -43,6 +43,8 @@ func init() {
 	Root.RegisterCMD(&Reverse)
 	Root.RegisterCMD(&Start)
 	Root.RegisterCMD(&ToDo)
+	Root.RegisterCMD(&Done)
+	Root.RegisterCMD(&Reset)
 	Root.RegisterCMD(&Update)
 	Root.RegisterCMD(&Worst)
 }

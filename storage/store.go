@@ -33,6 +33,10 @@ type Store interface {
 	GetToDo() (Packages, int, int, error)
 	// StartToDo adds a new package to the todo list
 	StartToDo(name string) error
+	// DoneToDo marks a package as complete and optionally queues its reverse deps
+	DoneToDo(name string, Continue bool) error
+	// ResetToDo clears the todo list
+	ResetToDo() error
 	// WorstToDo gets a worst-case list of packages to rebuild
 	WorstToDo(name string) (Packages, error)
 	// Update clears the current store and rebuilds the contents from the provided index

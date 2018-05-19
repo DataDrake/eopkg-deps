@@ -51,7 +51,11 @@ setup-deps:
 	@$(call stage,DEPS)
 	@if [ ! -e $(GOBIN)/dep ]; then \
 	    $(call task,Installing dep...); \
-	    $(GOGET) github.com/golang/dep/cmd/dep; \
+	    $(GOGET) -d github.com/golang/dep/cmd/dep; \
+	    pushd build/src/github.com/golang/dep/cmd/dep; \
+	    git checkout tags/v0.4.1; \
+	    $(GOINSTALL) ./...; \
+	    popd; \
 	fi
 	@if [ ! -e $(GOBIN)/megacheck ]; then \
 	    $(call task,Installing megacheck...); \
@@ -64,8 +68,10 @@ setup-deps:
 	fi
 	@if [ -d build/src/golang.org ]; then rm -rf build/src/golang.org; fi
 	@if [ -d build/src/github.com/golang ]; then rm -rf build/src/github.com/golang; fi
-	@$(call task,Getting build dependencies...)
-	@cd $(GOPROJROOT)/$(PKGNAME); GOPATH=$(GOPATH) $(GOBIN)/dep ensure
+	@if [ ! -d vendor ]; then \
+	    $(call task,Getting build dependencies...); \
+	    cd $(GOPROJROOT)/$(PKGNAME); GOPATH=$(GOPATH) $(GOBIN)/dep ensure; \
+	fi
 
 install:
 	@$(call stage,INSTALL)

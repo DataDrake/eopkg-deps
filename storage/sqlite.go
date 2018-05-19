@@ -143,8 +143,8 @@ func (s *SqliteStore) GetReverse(rhs string) (Packages, error) {
 	return lhs, err
 }
 
-const getToDo = "SELECT count(*) FROM todo WHERE name=?"
-const insertToDo = "INSERT INTO todo VALUES (?, ?, FALSE)"
+const getToDo = "SELECT count(*) FROM todo WHERE name=? AND done=FALSE"
+const insertToDo = "INSERT OR REPLACE INTO todo VALUES (?, ?, FALSE)"
 
 // StartToDo adds a new package to the todo list
 func (s *SqliteStore) StartToDo(name string) error {
@@ -164,13 +164,39 @@ func (s *SqliteStore) StartToDo(name string) error {
 	return err
 }
 
+const markDone = "UPDATE todo SET done=TRUE WHERE name=?"
+
+const insertReverse = `
+INSERT INTO todo
+    SELECT name, id, FALSE FROM packages INNER JOIN (
+        SELECT left_id FROM deps WHERE right_id=?
+    ) ON packages.id=left_id
+    WHERE id NOT IN (SELECT package_id FROM todo)
+`
+
+// DoneToDo marks a package as complete and optionally queues its reverse deps
+func (s *SqliteStore) DoneToDo(name string, Continue bool) error {
+	_, err := s.db.Exec(markDone, name)
+    if err != nil {
+        return err
+    }
+    if Continue {
+        id, err := s.nameToID(name)
+        _, err = s.db.Exec(insertReverse, id)
+        if err != nil {
+            return err
+        }
+    }
+	return err
+}
+
 const getUnblocked = `
 SELECT name FROM todo WHERE package_id
 NOT IN (
     SELECT left_id FROM deps INNER JOIN (
         SELECT package_id FROM todo WHERE done=FALSE
     ) ON right_id=package_id
-);
+) AND done=FALSE;
 `
 const getToDoCount = `SELECT count(*) FROM todo WHERE done=FALSE`
 const getToDoDone = `SELECT count(*) FROM todo WHERE done=TRUE`
@@ -233,6 +259,15 @@ func (s *SqliteStore) WorstToDo(name string) (Packages, error) {
 	}
 	return list, err
 }
+
+const resetToDo = "DELETE FROM todo"
+
+// ResetToDo clears the todo list
+func (s *SqliteStore) ResetToDo() error {
+    _, err := s.db.Exec(resetToDo)
+    return err
+}
+
 
 const dropTables = `
     DROP TABLE IF EXISTS packages;

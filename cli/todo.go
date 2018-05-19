@@ -59,6 +59,12 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
+	var rowFormat string
+	if flags.NoColor {
+		rowFormat = "%s\n"
+	} else {
+		rowFormat = "\033[0m%s\n"
+	}
 	unblocked, count, done, err := s.GetToDo()
 	if err != nil {
 		s.Close()
@@ -68,21 +74,19 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 	sort.Sort(unblocked)
 	if len(unblocked) == 0 {
 		s.Close()
-		fmt.Println("No todo items found.\n")
-		os.Exit(0)
+		fmt.Println("No todo items found.")
+		goto DONE
 	}
-	var rowFormat string
 	if flags.NoColor {
 		fmt.Println(ToDoHeader)
-		rowFormat = "%s\n"
 	} else {
 		fmt.Println(ToDoHeaderColor)
-		rowFormat = "\033[0m%s\n"
 	}
 	for _, item := range unblocked {
 		fmt.Printf(rowFormat, item.Name)
 	}
-	fmt.Println()
+DONE:
+    fmt.Println()
 	if flags.NoColor {
 		fmt.Printf("%-10s: %d\n", "Unblocked", len(unblocked))
 		fmt.Printf("%-10s: %d\n", "Queued", count)
