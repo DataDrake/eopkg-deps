@@ -17,7 +17,7 @@
 package cli
 
 import (
-    "database/sql"
+	"database/sql"
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
@@ -64,11 +64,11 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		os.Exit(1)
 	}
 	lefts, err := s.GetReverse(args.Package)
-    if err == sql.ErrNoRows {
-        fmt.Printf("Package '%s' does not exist or you need to update\n", args.Package)
-        s.Close()
-        os.Exit(1)
-    }
+	if err == sql.ErrNoRows {
+		fmt.Printf("Package '%s' does not exist or you need to update\n", args.Package)
+		s.Close()
+		os.Exit(1)
+	}
 	if err != nil {
 		fmt.Printf("Failed to resolve reverse deps, reason: '%s'\n", err.Error())
 		s.Close()

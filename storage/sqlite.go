@@ -17,7 +17,7 @@
 package storage
 
 import (
-    "database/sql"
+	"database/sql"
 	"fmt"
 	"github.com/DataDrake/eopkg-deps/index"
 	"github.com/jmoiron/sqlx"
@@ -178,17 +178,17 @@ INSERT INTO todo
 
 // DoneToDo marks a package as complete and optionally queues its reverse deps
 func (s *SqliteStore) DoneToDo(name string, Continue bool) error {
-    done := false
+	done := false
 	err := s.db.Get(&done, checkDone, name)
-    if err == sql.ErrNoRows {
-        return fmt.Errorf("Package '%s' is not in the todo list", name)
-    }
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("Package '%s' is not in the todo list", name)
+	}
 	if err != nil {
 		return err
 	}
-    if done {
-        return fmt.Errorf("Package '%s' is already marked 'Done'", name)
-    }
+	if done {
+		return fmt.Errorf("Package '%s' is already marked 'Done'", name)
+	}
 	_, err = s.db.Exec(markDone, name)
 	if err != nil {
 		return err
