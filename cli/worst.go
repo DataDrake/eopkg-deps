@@ -17,6 +17,7 @@
 package cli
 
 import (
+    "database/sql"
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
@@ -62,6 +63,11 @@ func WorstRun(r *cmd.RootCMD, c *cmd.CMD) {
 		os.Exit(1)
 	}
 	list, err := s.WorstToDo(args.Name)
+    if err == sql.ErrNoRows {
+        fmt.Printf("Package '%s' does not exist or you need to update\n", args.Name)
+        s.Close()
+        os.Exit(1)
+    }
 	if err != nil {
 		s.Close()
 		fmt.Printf("Failed to get todo list, reason: '%s'\n", err.Error())
@@ -90,7 +96,6 @@ func WorstRun(r *cmd.RootCMD, c *cmd.CMD) {
 	} else {
 		fmt.Printf("\033[0m%s: %d\n", "Total", len(list))
 	}
-	fmt.Println()
 	s.Close()
 	os.Exit(0)
 }

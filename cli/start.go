@@ -17,6 +17,7 @@
 package cli
 
 import (
+    "database/sql"
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
@@ -54,6 +55,11 @@ func StartRun(r *cmd.RootCMD, c *cmd.CMD) {
 		os.Exit(1)
 	}
 	err = s.StartToDo(args.Name)
+    if err == sql.ErrNoRows {
+        fmt.Printf("Package '%s' does not exist or you need to update\n", args.Name)
+        s.Close()
+        os.Exit(1)
+    }
 	if err != nil {
 		s.Close()
 		fmt.Printf("Failed to mark for rebuilds , reason: '%s'\n", err.Error())

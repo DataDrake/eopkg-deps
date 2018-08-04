@@ -17,6 +17,7 @@
 package cli
 
 import (
+    "database/sql"
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
@@ -42,9 +43,9 @@ type ForwardArgs struct {
 
 const (
 	// DependencyHeader is a table heading for forward dependencies
-	DependencyHeader = "Dependency\tSince Release"
+	DependencyHeader = "Dependency\tSince Release\n"
 	// DependencyHeaderColor is a table heading for forward dependencies, in color
-	DependencyHeaderColor = "\033[1mDependency\tSince Release"
+	DependencyHeaderColor = "\033[1mDependency\tSince Release\n"
 )
 
 // ForwardRun carries out the "forward" subcommand
@@ -63,6 +64,11 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		os.Exit(1)
 	}
 	rights, err := s.GetForward(args.Package)
+    if err == sql.ErrNoRows {
+        fmt.Printf("Package '%s' does not exist or you need to update\n", args.Package)
+        s.Close()
+        os.Exit(1)
+    }
 	if err != nil {
 		s.Close()
 		fmt.Printf("Failed to get forward deps, reason: '%s'\n", err.Error())
@@ -82,10 +88,10 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var rowFormat string
 	if flags.NoColor {
-		fmt.Println(DependencyHeader, args.Package)
+		fmt.Fprintf(w, DependencyHeader)
 		rowFormat = RowFormat
 	} else {
-		fmt.Println(DependencyHeaderColor, args.Package)
+		fmt.Fprintf(w, DependencyHeaderColor)
 		rowFormat = RowFormatColor
 	}
 	for _, right := range rights {

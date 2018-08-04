@@ -17,6 +17,7 @@
 package cli
 
 import (
+    "database/sql"
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
@@ -42,9 +43,9 @@ type ReverseArgs struct {
 
 const (
 	// ReverseDependencyHeader is a table heading for reverse dependencies
-	ReverseDependencyHeader = "Reverse Dependency\tRelease"
+	ReverseDependencyHeader = "Reverse Dependency\tRelease\n"
 	// ReverseDependencyHeaderColor is a table heading for reverse dependencies, in color
-	ReverseDependencyHeaderColor = "\033[1mReverse Dependency\tRelease"
+	ReverseDependencyHeaderColor = "\033[1mReverse Dependency\tRelease\n"
 )
 
 // ReverseRun carries out the "Reverse" subcommand
@@ -63,6 +64,11 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		os.Exit(1)
 	}
 	lefts, err := s.GetReverse(args.Package)
+    if err == sql.ErrNoRows {
+        fmt.Printf("Package '%s' does not exist or you need to update\n", args.Package)
+        s.Close()
+        os.Exit(1)
+    }
 	if err != nil {
 		fmt.Printf("Failed to resolve reverse deps, reason: '%s'\n", err.Error())
 		s.Close()
@@ -83,10 +89,10 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var rowFormat string
 	if flags.NoColor {
-		fmt.Println(ReverseDependencyHeader, args.Package)
+		fmt.Fprintf(w, ReverseDependencyHeader)
 		rowFormat = RowFormat
 	} else {
-		fmt.Println(ReverseDependencyHeaderColor, args.Package)
+		fmt.Fprintf(w, ReverseDependencyHeaderColor)
 		rowFormat = RowFormatColor
 	}
 	for _, left := range lefts {
