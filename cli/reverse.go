@@ -93,7 +93,7 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Fprintf(w, rowFormat, left.Name, left.Release)
 	}
 	w.Flush()
-	fmt.Println()
+	fmt.Printf("\nTotal: %d\n", len(lefts))
 	s.Close()
 	os.Exit(0)
 }

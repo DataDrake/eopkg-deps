@@ -92,7 +92,7 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Fprintf(w, rowFormat, right.Name, right.Release)
 	}
 	w.Flush()
-	fmt.Println()
+	fmt.Printf("\nTotal: %d\n", len(rights))
 	s.Close()
 	os.Exit(0)
 }
