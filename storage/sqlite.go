@@ -177,16 +177,16 @@ INSERT INTO todo
 // DoneToDo marks a package as complete and optionally queues its reverse deps
 func (s *SqliteStore) DoneToDo(name string, Continue bool) error {
 	_, err := s.db.Exec(markDone, name)
-    if err != nil {
-        return err
-    }
-    if Continue {
-        id, err := s.nameToID(name)
-        _, err = s.db.Exec(insertReverse, id)
-        if err != nil {
-            return err
-        }
-    }
+	if err != nil {
+		return err
+	}
+	if Continue {
+		id, err := s.nameToID(name)
+		_, err = s.db.Exec(insertReverse, id)
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 
@@ -264,10 +264,9 @@ const resetToDo = "DELETE FROM todo"
 
 // ResetToDo clears the todo list
 func (s *SqliteStore) ResetToDo() error {
-    _, err := s.db.Exec(resetToDo)
-    return err
+	_, err := s.db.Exec(resetToDo)
+	return err
 }
-
 
 const dropTables = `
     DROP TABLE IF EXISTS packages;

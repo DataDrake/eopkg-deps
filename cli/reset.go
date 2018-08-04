@@ -34,7 +34,7 @@ var Reset = cmd.CMD{
 }
 
 // ResetArgs contains the arguments for the "reset" subcommand
-type ResetArgs struct {}
+type ResetArgs struct{}
 
 // ResetRun carries out the "reset" subcommand
 func ResetRun(r *cmd.RootCMD, c *cmd.CMD) {

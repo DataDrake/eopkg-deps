@@ -86,7 +86,7 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(rowFormat, item.Name)
 	}
 DONE:
-    fmt.Println()
+	fmt.Println()
 	if flags.NoColor {
 		fmt.Printf("%-10s: %d\n", "Unblocked", len(unblocked))
 		fmt.Printf("%-10s: %d\n", "Queued", count)

@@ -22,6 +22,7 @@ import (
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
+	"strings"
 )
 
 // Done marks a package as rebuilt and optionally marks its reverse dependencies for rebuilds
@@ -44,10 +45,11 @@ func DoneRun(r *cmd.RootCMD, c *cmd.CMD) {
 	//flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*DoneArgs)
 	var Continue bool
+	args.Continue = strings.ToLower(args.Continue)
 	switch args.Continue {
-	case "Yes", "yes", "Y", "y":
+	case "yes", "y", "true", "t":
 		Continue = true
-	case "No", "no", "N", "n":
+	case "no", "n", "false", "f":
 		Continue = false
 	default:
 		fmt.Println("Coninue must be some flavor of (Y)es or (N)o")
