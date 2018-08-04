@@ -17,6 +17,7 @@
 package storage
 
 import (
+    "database/sql"
 	"fmt"
 	"github.com/DataDrake/eopkg-deps/index"
 	"github.com/jmoiron/sqlx"
@@ -164,6 +165,7 @@ func (s *SqliteStore) StartToDo(name string) error {
 	return err
 }
 
+const checkDone = "SELECT done FROM todo WHERE name=? AND done=false"
 const markDone = "UPDATE todo SET done=TRUE WHERE name=?"
 
 const insertReverse = `
@@ -176,7 +178,18 @@ INSERT INTO todo
 
 // DoneToDo marks a package as complete and optionally queues its reverse deps
 func (s *SqliteStore) DoneToDo(name string, Continue bool) error {
-	_, err := s.db.Exec(markDone, name)
+    done := false
+	err := s.db.Get(&done, checkDone, name)
+    if err == sql.ErrNoRows {
+        return fmt.Errorf("Package '%s' is not in the todo list", name)
+    }
+	if err != nil {
+		return err
+	}
+    if done {
+        return fmt.Errorf("Package '%s' is already marked 'Done'", name)
+    }
+	_, err = s.db.Exec(markDone, name)
 	if err != nil {
 		return err
 	}
