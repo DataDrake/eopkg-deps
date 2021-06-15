@@ -19,7 +19,7 @@ package cli
 // Paths
 const (
 	DefaultDBLocation    = "/.cache/eopkg-deps.db"
-	DefaultIndexLocation = "/var/lib/eopkg/index/Unstable/eopkg-index.xml"
+	DefaultIndexLocation = "/var/lib/eopkg/index/Solus/eopkg-index.xml"
 )
 
 // Error Strings
