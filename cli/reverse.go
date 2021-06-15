@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package cli
 import (
 	"database/sql"
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
@@ -27,8 +27,12 @@ import (
 	"text/tabwriter"
 )
 
+func init() {
+	cmd.Register(&Reverse)
+}
+
 // Reverse gets a list of packages that depend on this package
-var Reverse = cmd.CMD{
+var Reverse = cmd.Sub{
 	Name:  "reverse",
 	Alias: "rev",
 	Short: "Get this package's reverse dependencies",
@@ -49,7 +53,7 @@ const (
 )
 
 // ReverseRun carries out the "Reverse" subcommand
-func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
+func ReverseRun(r *cmd.Root, c *cmd.Sub) {
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*ReverseArgs)
 	s := storage.NewStore()
@@ -58,20 +62,18 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
+	defer s.Close()
 	lefts, err := s.GetReverse(args.Package)
 	if err == sql.ErrNoRows {
 		fmt.Printf("Package '%s' does not exist or you need to update\n", args.Package)
-		s.Close()
 		os.Exit(1)
 	}
 	if err != nil {
 		fmt.Printf("Failed to resolve reverse deps, reason: '%s'\n", err.Error())
-		s.Close()
 		os.Exit(1)
 	}
 	sort.Sort(lefts)
@@ -82,9 +84,8 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 
 	if len(lefts) == 0 {
-		fmt.Println("No reverse dependencies found.\n")
-		s.Close()
-		os.Exit(0)
+		fmt.Printf("No reverse dependencies found.\n\n")
+		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var rowFormat string
@@ -100,6 +101,4 @@ func ReverseRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 	w.Flush()
 	fmt.Printf("\nTotal: %d\n", len(lefts))
-	s.Close()
-	os.Exit(0)
 }

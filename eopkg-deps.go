@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package main
 
 import (
-    "github.com/DataDrake/eopkg-deps/cli"
+	"github.com/DataDrake/eopkg-deps/cli"
 )
 
 func main() {
-    cli.Root.Run()
+	cli.Root.Run()
 }

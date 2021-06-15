@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,15 +19,19 @@ package cli
 import (
 	"database/sql"
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
 	"sort"
 )
 
+func init() {
+	cmd.Register(&Worst)
+}
+
 // Worst estimates what a full receursive rebuild would look like
-var Worst = cmd.CMD{
+var Worst = cmd.Sub{
 	Name:  "worst",
 	Alias: "ow",
 	Short: "Calculate the worst-case rebuild list",
@@ -48,7 +52,7 @@ const (
 )
 
 // WorstRun carries out the "worst" subcommand
-func WorstRun(r *cmd.RootCMD, c *cmd.CMD) {
+func WorstRun(r *cmd.Root, c *cmd.Sub) {
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*WorstArgs)
 	s := storage.NewStore()
@@ -57,26 +61,23 @@ func WorstRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
+	defer s.Close()
 	list, err := s.WorstToDo(args.Name)
 	if err == sql.ErrNoRows {
 		fmt.Printf("Package '%s' does not exist or you need to update\n", args.Name)
-		s.Close()
 		os.Exit(1)
 	}
 	if err != nil {
-		s.Close()
 		fmt.Printf("Failed to get todo list, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
 	if len(list) == 0 {
-		s.Close()
-		fmt.Println("No todo items found.\n")
-		os.Exit(0)
+		fmt.Printf("No todo items found.\n\n")
+		return
 	}
 	sort.Sort(list)
 	var rowFormat string
@@ -96,6 +97,4 @@ func WorstRun(r *cmd.RootCMD, c *cmd.CMD) {
 	} else {
 		fmt.Printf("\033[0m%s: %d\n", "Total", len(list))
 	}
-	s.Close()
-	os.Exit(0)
 }

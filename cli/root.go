@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,17 @@
 package cli
 
 import (
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 )
 
 // Root is the main command for this application
-var Root *cmd.RootCMD
+var Root = &cmd.Root{
+	Name:  "eopkg-deps",
+	Short: "Manage and work with eopkg dependencies",
+	Flags: &GlobalFlags{
+		NoColor: false,
+	},
+}
 
 // GlobalFlags contains flags applicable to all sub-commands
 type GlobalFlags struct {
@@ -29,22 +35,5 @@ type GlobalFlags struct {
 }
 
 func init() {
-	// Build Application
-	Root = &cmd.RootCMD{
-		Name:  "eopkg-deps",
-		Short: "Manage and work with eopkg dependencies",
-		Flags: &GlobalFlags{
-			NoColor: false,
-		},
-	}
-	// Setup the Sub-Commands
-	Root.RegisterCMD(&cmd.Help)
-	Root.RegisterCMD(&Forward)
-	Root.RegisterCMD(&Reverse)
-	Root.RegisterCMD(&Start)
-	Root.RegisterCMD(&ToDo)
-	Root.RegisterCMD(&Done)
-	Root.RegisterCMD(&Reset)
-	Root.RegisterCMD(&Update)
-	Root.RegisterCMD(&Worst)
+	cmd.Register(&cmd.Help)
 }

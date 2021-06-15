@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,9 +66,8 @@ func (s *SqliteStore) Open(location string) error {
 	if s.open {
 		return fmt.Errorf("DB is already open")
 	}
-	db, err := sqlx.Open("sqlite3", location)
-	s.db = db
-	if err != nil {
+	var err error
+	if s.db, err = sqlx.Open("sqlite3", location); err != nil {
 		return err
 	}
 	s.open = true
@@ -81,8 +80,7 @@ const getPackage = "SELECT id FROM packages WHERE name=?"
 func (s *SqliteStore) nameToID(name string) (int, error) {
 	var id int
 	row := s.db.QueryRowx(getPackage, name)
-	err := row.Scan(&id)
-	if err != nil {
+	if err := row.Scan(&id); err != nil {
 		return id, err
 	}
 	return id, nil
@@ -107,8 +105,7 @@ func (s *SqliteStore) GetForward(lhs string) (Packages, error) {
 	}
 	for rows.Next() {
 		var p Package
-		err := rows.StructScan(&p)
-		if err != nil {
+		if err := rows.StructScan(&p); err != nil {
 			return rhs, err
 		}
 		rhs = append(rhs, p)
@@ -135,8 +132,7 @@ func (s *SqliteStore) GetReverse(rhs string) (Packages, error) {
 	}
 	for rows.Next() {
 		var p Package
-		err := rows.StructScan(&p)
-		if err != nil {
+		if err := rows.StructScan(&p); err != nil {
 			return lhs, err
 		}
 		lhs = append(lhs, p)
@@ -150,8 +146,7 @@ const insertToDo = "INSERT OR REPLACE INTO todo VALUES (?, ?, FALSE)"
 // StartToDo adds a new package to the todo list
 func (s *SqliteStore) StartToDo(name string) error {
 	var count int
-	err := s.db.Get(&count, getToDo, name)
-	if err != nil {
+	if err := s.db.Get(&count, getToDo, name); err != nil {
 		return err
 	}
 	if count > 0 {
@@ -189,14 +184,12 @@ func (s *SqliteStore) DoneToDo(name string, Continue bool) error {
 	if done {
 		return fmt.Errorf("Package '%s' is already marked 'Done'", name)
 	}
-	_, err = s.db.Exec(markDone, name)
-	if err != nil {
+	if _, err = s.db.Exec(markDone, name); err != nil {
 		return err
 	}
 	if Continue {
 		id, err := s.nameToID(name)
-		_, err = s.db.Exec(insertReverse, id)
-		if err != nil {
+		if _, err = s.db.Exec(insertReverse, id); err != nil {
 			return err
 		}
 	}
@@ -223,20 +216,17 @@ func (s *SqliteStore) GetToDo() (Packages, int, int, error) {
 	}
 	for rows.Next() {
 		var name string
-		err := rows.Scan(&name)
-		if err != nil {
+		if err := rows.Scan(&name); err != nil {
 			return unblocked, 0, 0, err
 		}
 		unblocked = append(unblocked, Package{name, 0})
 	}
 	var count int
-	err = s.db.Get(&count, getToDoCount)
-	if err != nil {
+	if err = s.db.Get(&count, getToDoCount); err != nil {
 		return unblocked, 0, 0, err
 	}
 	var done int
-	err = s.db.Get(&done, getToDoDone)
-	if err != nil {
+	if err = s.db.Get(&done, getToDoDone); err != nil {
 		return unblocked, 0, 0, err
 	}
 	return unblocked, count, done, err
@@ -264,8 +254,7 @@ func (s *SqliteStore) WorstToDo(name string) (Packages, error) {
 	}
 	for rows.Next() {
 		var pName string
-		err := rows.Scan(&pName)
-		if err != nil {
+		if err = rows.Scan(&pName); err != nil {
 			return list, err
 		}
 		list = append(list, Package{pName, 0})
@@ -307,8 +296,7 @@ func (s *SqliteStore) Update(i *index.Index) error {
 			continue
 		}
 		idMap[pkg.Name] = id
-		_, err = pkgStmt.Exec(id, pkg.Name, pkg.Releases[0].Number)
-		if err != nil {
+		if _, err = pkgStmt.Exec(id, pkg.Name, pkg.Releases[0].Number); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -323,8 +311,7 @@ func (s *SqliteStore) Update(i *index.Index) error {
 	for leftID, lpkg := range i.Packages {
 		for _, rpkg := range lpkg.RuntimeDependencies {
 			rightID := idMap[rpkg.Name]
-			_, err = depStmt.Exec(leftID, rightID, rpkg.Release)
-			if err != nil {
+			if _, err = depStmt.Exec(leftID, rightID, rpkg.Release); err != nil {
 				tx.Rollback()
 				return err
 			}

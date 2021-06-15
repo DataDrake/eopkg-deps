@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package cli
 import (
 	"database/sql"
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
@@ -27,8 +27,12 @@ import (
 	"text/tabwriter"
 )
 
+func init() {
+	cmd.Register(&Forward)
+}
+
 // Forward gets a list of packages that this package depends on
-var Forward = cmd.CMD{
+var Forward = cmd.Sub{
 	Name:  "forward",
 	Alias: "fwd",
 	Short: "Get this package's dependencies",
@@ -49,7 +53,7 @@ const (
 )
 
 // ForwardRun carries out the "forward" subcommand
-func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
+func ForwardRun(r *cmd.Root, c *cmd.Sub) {
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*ForwardArgs)
 	s := storage.NewStore()
@@ -58,19 +62,17 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
+	defer s.Close()
 	rights, err := s.GetForward(args.Package)
 	if err == sql.ErrNoRows {
 		fmt.Printf("Package '%s' does not exist or you need to update\n", args.Package)
-		s.Close()
 		os.Exit(1)
 	}
 	if err != nil {
-		s.Close()
 		fmt.Printf("Failed to get forward deps, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
@@ -81,9 +83,8 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(PackageFormatColor, args.Package)
 	}
 	if len(rights) == 0 {
-		s.Close()
-		fmt.Println("No dependencies found.\n")
-		os.Exit(0)
+		fmt.Printf("No dependencies found.\n\n")
+		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	var rowFormat string
@@ -99,6 +100,4 @@ func ForwardRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 	w.Flush()
 	fmt.Printf("\nTotal: %d\n", len(rights))
-	s.Close()
-	os.Exit(0)
 }

@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,15 +19,19 @@ package cli
 import (
 	"database/sql"
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
 	"strings"
 )
 
+func init() {
+	cmd.Register(&Done)
+}
+
 // Done marks a package as rebuilt and optionally marks its reverse dependencies for rebuilds
-var Done = cmd.CMD{
+var Done = cmd.Sub{
 	Name:  "done",
 	Alias: "do",
 	Short: "Mark a package as rebuilt, marking reverse deps for rebuilds",
@@ -42,7 +46,7 @@ type DoneArgs struct {
 }
 
 // DoneRun carries out the "done" subcommand
-func DoneRun(r *cmd.RootCMD, c *cmd.CMD) {
+func DoneRun(r *cmd.Root, c *cmd.Sub) {
 	//flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*DoneArgs)
 	var Continue bool
@@ -62,23 +66,18 @@ func DoneRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.DoneToDo(args.Name, Continue)
-	if err == sql.ErrNoRows {
+	defer s.Close()
+	if err = s.DoneToDo(args.Name, Continue); err == sql.ErrNoRows {
 		fmt.Printf("Package '%s' does not exist or you need to update\n", args.Name)
-		s.Close()
 		os.Exit(1)
 	}
 	if err != nil {
-		s.Close()
 		fmt.Printf("Failed to mark as rebuilt , reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
 	fmt.Printf("Successfully marked '%s' as rebuilt\n", args.Name)
-	s.Close()
-	os.Exit(0)
 }

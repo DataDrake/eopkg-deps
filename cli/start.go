@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,14 +19,18 @@ package cli
 import (
 	"database/sql"
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
 )
 
+func init() {
+	cmd.Register(&Start)
+}
+
 // Start marks a package for rebuilds
-var Start = cmd.CMD{
+var Start = cmd.Sub{
 	Name:  "start",
 	Alias: "to",
 	Short: "Mark a package for rebuilds",
@@ -40,7 +44,7 @@ type StartArgs struct {
 }
 
 // StartRun carries out the "start" subcommand
-func StartRun(r *cmd.RootCMD, c *cmd.CMD) {
+func StartRun(r *cmd.Root, c *cmd.Sub) {
 	//flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*StartArgs)
 	s := storage.NewStore()
@@ -49,23 +53,18 @@ func StartRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.StartToDo(args.Name)
-	if err == sql.ErrNoRows {
+	defer s.Close()
+	if err = s.StartToDo(args.Name); err == sql.ErrNoRows {
 		fmt.Printf("Package '%s' does not exist or you need to update\n", args.Name)
-		s.Close()
 		os.Exit(1)
 	}
 	if err != nil {
-		s.Close()
 		fmt.Printf("Failed to mark for rebuilds , reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
 	fmt.Printf("Successfully marked '%s' for rebuilds\n", args.Name)
-	s.Close()
-	os.Exit(0)
 }

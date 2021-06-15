@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,24 +18,24 @@ package cli
 
 import (
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
 	"sort"
 )
 
+func init() {
+	cmd.Register(&ToDo)
+}
+
 // ToDo gets a list of packages that still need to be rebuilt
-var ToDo = cmd.CMD{
+var ToDo = cmd.Sub{
 	Name:  "todo",
 	Alias: "td",
 	Short: "Get packages to rebuild",
-	Args:  &ToDoArgs{},
 	Run:   ToDoRun,
 }
-
-// ToDoArgs contains the arguments for the "todo" subcommand
-type ToDoArgs struct{}
 
 const (
 	// ToDoHeader is a table heading for remaining packages
@@ -45,7 +45,7 @@ const (
 )
 
 // ToDoRun carries out the "todo" subcommand
-func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
+func ToDoRun(r *cmd.Root, c *cmd.Sub) {
 	flags := r.Flags.(*GlobalFlags)
 	//args := c.Args.(*ToDoArgs)
 	s := storage.NewStore()
@@ -54,11 +54,11 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
+	defer s.Close()
 	var rowFormat string
 	if flags.NoColor {
 		rowFormat = "%s\n"
@@ -67,13 +67,11 @@ func ToDoRun(r *cmd.RootCMD, c *cmd.CMD) {
 	}
 	unblocked, count, done, err := s.GetToDo()
 	if err != nil {
-		s.Close()
 		fmt.Printf("Failed to get todo list, reason: '%s'\n", err.Error())
 		os.Exit(1)
 	}
 	sort.Sort(unblocked)
 	if len(unblocked) == 0 {
-		s.Close()
 		fmt.Println("No todo items found.")
 		goto DONE
 	}
@@ -97,6 +95,4 @@ DONE:
 		fmt.Printf("\033[0m%-10s: %d\n", "Completed", done)
 	}
 	fmt.Println()
-	s.Close()
-	os.Exit(0)
 }

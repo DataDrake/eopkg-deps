@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Bryan T. Meyers <bmeyers@datadrake.com>
+// Copyright 2018-2021 Bryan T. Meyers <root@datadrake.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,27 +18,27 @@ package cli
 
 import (
 	"fmt"
-	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/DataDrake/cli-ng/v2/cmd"
 	"github.com/DataDrake/eopkg-deps/index"
 	"github.com/DataDrake/eopkg-deps/storage"
 	"os"
 	"os/user"
 )
 
+func init() {
+	cmd.Register(&Update)
+}
+
 // Update creats a new datastore and populates it from the current eopkg index
-var Update = cmd.CMD{
+var Update = cmd.Sub{
 	Name:  "update",
 	Alias: "up",
 	Short: "Update rebuilds the datastore from the eopkg index",
-	Args:  &UpdateArgs{},
 	Run:   UpdateRun,
 }
 
-// UpdateArgs contains the arguments for the "update" subcommand
-type UpdateArgs struct{}
-
 // UpdateRun carries out the "update" subcommand
-func UpdateRun(r *cmd.RootCMD, c *cmd.CMD) {
+func UpdateRun(r *cmd.Root, c *cmd.Sub) {
 	//args := c.Args.(*RebuildArgs)
 	i := index.NewIndex()
 	err := i.Load(DefaultIndexLocation)
@@ -53,17 +53,13 @@ func UpdateRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Printf(UserErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Open(curr.HomeDir + DefaultDBLocation)
-	if err != nil {
+	if err = s.Open(curr.HomeDir + DefaultDBLocation); err != nil {
 		fmt.Printf(DBOpenErrorFormat, err.Error())
 		os.Exit(1)
 	}
-	err = s.Update(i)
-	if err != nil {
+	defer s.Close()
+	if err = s.Update(i); err != nil {
 		fmt.Printf("Failed to update DB, reason: '%s'\n", err.Error())
-		s.Close()
 		os.Exit(1)
 	}
-	s.Close()
-	os.Exit(0)
 }
